@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { InputField } from "../InputField";
+import { SelectField } from "../SelectField";
 
 interface AddressData {
   cep: string;
@@ -21,6 +22,36 @@ interface AddressData {
   uf: string;
   numero?: string;
 }
+
+const ESTADOS_BRASIL = [
+  { label: "Acre", value: "AC" },
+  { label: "Alagoas", value: "AL" },
+  { label: "Amapá", value: "AP" },
+  { label: "Amazonas", value: "AM" },
+  { label: "Bahia", value: "BA" },
+  { label: "Ceará", value: "CE" },
+  { label: "Distrito Federal", value: "DF" },
+  { label: "Espírito Santo", value: "ES" },
+  { label: "Goiás", value: "GO" },
+  { label: "Maranhão", value: "MA" },
+  { label: "Mato Grosso", value: "MT" },
+  { label: "Mato Grosso do Sul", value: "MS" },
+  { label: "Minas Gerais", value: "MG" },
+  { label: "Pará", value: "PA" },
+  { label: "Paraíba", value: "PB" },
+  { label: "Paraná", value: "PR" },
+  { label: "Pernambuco", value: "PE" },
+  { label: "Piauí", value: "PI" },
+  { label: "Rio de Janeiro", value: "RJ" },
+  { label: "Rio Grande do Norte", value: "RN" },
+  { label: "Rio Grande do Sul", value: "RS" },
+  { label: "Rondônia", value: "RO" },
+  { label: "Roraima", value: "RR" },
+  { label: "Santa Catarina", value: "SC" },
+  { label: "São Paulo", value: "SP" },
+  { label: "Sergipe", value: "SE" },
+  { label: "Tocantins", value: "TO" },
+];
 
 export function Forms() {
   const [cep, setCep] = useState("");
@@ -126,7 +157,13 @@ export function Forms() {
             />
           </View>
           <View style={{ flex: 1, marginLeft: 10 }}>
-            <InputField label="UF" value={address.uf} editable={false} />
+            <SelectField
+              label="UF"
+              value={address.uf || ""}
+              items={ESTADOS_BRASIL}
+              onValueChange={(value) => updateField("uf", value)}
+              enabled={true} // Mude para false se quiser travar após a busca
+            />
           </View>
         </View>
 
