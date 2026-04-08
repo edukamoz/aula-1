@@ -1,6 +1,7 @@
 import { Picker } from "@react-native-picker/picker";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { BORDER_RADIUS, COLORS } from "../../constants/theme";
 
 interface SelectFieldProps {
   label: string;
@@ -28,9 +29,9 @@ export const SelectField = ({
           enabled={enabled}
           mode="dropdown"
           style={styles.picker}
-          dropdownIconColor={enabled ? "#64748b" : "#cbd5e1"}
+          dropdownIconColor={enabled ? COLORS.textMuted : COLORS.textMuted}
         >
-          <Picker.Item label="Selecione..." value="" color="#94a3b8" />
+          <Picker.Item label="Selecione..." value="" color={COLORS.textMuted} />
 
           {items.map((item) => (
             <Picker.Item
@@ -53,15 +54,15 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#475569",
+    color: COLORS.primary,
     marginBottom: 6,
   },
   pickerWrapper: {
     height: 52,
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
+    backgroundColor: COLORS.surfaceLight,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1.5,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.border,
     justifyContent: "center",
     overflow: "hidden",
   },
@@ -69,13 +70,13 @@ const styles = StyleSheet.create({
     height: 52,
     width: "100%",
     backgroundColor: "transparent",
-    color: "#1e293b",
+    color: COLORS.text,
   },
   itemText: {
     fontSize: 16,
   },
   disabledInput: {
-    backgroundColor: "#f1f5f9",
-    borderColor: "#e2e8f0",
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.border,
   },
 });

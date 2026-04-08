@@ -6,6 +6,7 @@ import {
   TextInputProps,
   View,
 } from "react-native";
+import { BORDER_RADIUS, COLORS } from "../../constants/theme";
 
 interface CustomInputProps extends TextInputProps {
   label: string;
@@ -21,7 +22,7 @@ export const InputField = React.forwardRef<TextInput, CustomInputProps>(
           styles.inputWrapper,
           props.editable === false && styles.disabledInput,
         ]}
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={COLORS.textMuted}
         {...props}
       />
     </View>
@@ -30,16 +31,21 @@ export const InputField = React.forwardRef<TextInput, CustomInputProps>(
 
 const styles = StyleSheet.create({
   inputContainer: { marginBottom: 15 },
-  label: { fontSize: 14, fontWeight: "600", color: "#475569", marginBottom: 6 },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.primary,
+    marginBottom: 6,
+  },
   inputWrapper: {
     height: 52,
-    backgroundColor: "#f8fafc",
-    borderRadius: 12,
+    backgroundColor: COLORS.surfaceLight,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1.5,
-    borderColor: "#e2e8f0",
+    borderColor: COLORS.border,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: "#1e293b",
+    color: COLORS.text,
   },
-  disabledInput: { backgroundColor: "#f1f5f9", color: "#64748b" },
+  disabledInput: { backgroundColor: COLORS.surface, color: COLORS.textMuted },
 });

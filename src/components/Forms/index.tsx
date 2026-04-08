@@ -10,18 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import { AddressData } from "../../types";
 import { InputField } from "../InputField";
 import { SelectField } from "../SelectField";
-
-interface AddressData {
-  cep: string;
-  logradouro: string;
-  complemento: string;
-  bairro: string;
-  localidade: string;
-  uf: string;
-  numero?: string;
-}
 
 const ESTADOS_BRASIL = [
   { label: "Acre", value: "AC" },
