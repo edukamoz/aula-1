@@ -13,7 +13,7 @@ import {
 import Toast from "react-native-toast-message";
 import { InputField } from "../components/InputField";
 import { SelectField } from "../components/SelectField";
-import { Banco, atualizarUsuario, exibirUsuarioPorId } from "../config/bd";
+import { getClientById, updateClient } from "../services/api";
 import { BORDER_RADIUS, COLORS, SHADOW } from "../constants/theme";
 import { validateCEP, validateEmail, validateName } from "../utils/validation";
 
@@ -49,7 +49,7 @@ const ESTADOS_BRASIL = [
 
 interface EditModalProps {
   visible: boolean;
-  usuarioId?: number;
+  usuarioId?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -73,61 +73,30 @@ export function EditModal({
   const [loadingCep, setLoadingCep] = useState(false);
 
   const numRef = useRef<TextInput>(null);
-  const isMountedRef = useRef(true);
-  const loadingRef = useRef(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    isMountedRef.current = true;
-
     if (visible && usuarioId) {
       loadUsuarioData();
     }
-
-    return () => {
-      isMountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
   }, [visible, usuarioId]);
 
   const loadUsuarioData = async () => {
-    // Evitar requisições duplicadas
-    if (loadingRef.current) {
-      console.log("⏳ Já há uma requisição de usuário em andamento");
-      return;
-    }
-
-    loadingRef.current = true;
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-
     try {
-      const db = await Banco();
-      const usuario = (await exibirUsuarioPorId(db, usuarioId!)) as any;
+      const usuario = await getClientById(usuarioId!);
 
-      if (isMountedRef.current && usuario) {
-        setNome(usuario.NOME_US || "");
-        setEmail(usuario.EMAIL_US || "");
-        setCep(usuario.CEP_US || "");
-        setLogradouro(usuario.LOGRADOURO_US || "");
-        setNumero(usuario.NUMERO_US || "");
-        setComplemento(usuario.COMPLEMENTO_US || "");
-        setBairro(usuario.BAIRRO_US || "");
-        setCidade(usuario.CIDADE_US || "");
-        setUf(usuario.UF_US || "");
-        console.log("✅ Dados do usuário carregados:", usuario.NOME_US);
+      if (usuario) {
+        setNome(usuario.nome || "");
+        setEmail(usuario.email || "");
+        setCep(usuario.cep || "");
+        setLogradouro(usuario.logradouro || "");
+        setNumero(usuario.complemento || ""); // API só tem complemento, usando como tudo
+        setComplemento(usuario.complemento || "");
+        setBairro(usuario.bairro || "");
+        setCidade(usuario.localidade || "");
+        setUf(usuario.uf || "");
       }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      if (isMountedRef.current && !errorMsg.includes("abort")) {
-        console.log("❌ Erro ao carregar usuário:", error);
-      }
-    } finally {
-      loadingRef.current = false;
+      console.log("❌ Erro ao carregar usuário:", error);
     }
   };
 
@@ -151,12 +120,9 @@ export function EditModal({
     try {
       const cleanCep = cep.replace(/\D/g, "");
       const response = await fetch(
-        `https://viacep.com.br/ws/${cleanCep}/json/`,
-        { signal: abortControllerRef.current?.signal },
+        `https://viacep.com.br/ws/${cleanCep}/json/`
       );
       const data = await response.json();
-
-      if (!isMountedRef.current) return;
 
       if (data.erro) {
         Toast.show({
@@ -172,104 +138,47 @@ export function EditModal({
       setCidade(data.localidade || "");
       setUf(data.uf || "");
       setComplemento(data.complemento || "");
-      console.log("✅ CEP encontrado:", cleanCep);
       setTimeout(() => numRef.current?.focus(), 100);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      if (isMountedRef.current && !errorMsg.includes("abort")) {
-        console.log("❌ Erro ao buscar CEP:", error);
-        Toast.show({
-          type: "error",
-          text1: "Erro de conexão",
-          text2: "Tente novamente mais tarde.",
-        });
-      }
+      Toast.show({
+        type: "error",
+        text1: "Erro de conexão",
+        text2: "Tente novamente mais tarde.",
+      });
     } finally {
-      if (isMountedRef.current) {
-        setLoadingCep(false);
-      }
+      setLoadingCep(false);
     }
   };
 
   const handleSalvar = async () => {
-    // Validações
-    if (!validateName(nome)) {
-      Toast.show({
-        type: "error",
-        text1: "Nome inválido",
-        text2: "Digite um nome com pelo menos 3 caracteres.",
-      });
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      Toast.show({
-        type: "error",
-        text1: "Email inválido",
-        text2: "Digite um email válido.",
-      });
-      return;
-    }
-
-    if (!validateCEP(cep)) {
-      Toast.show({
-        type: "error",
-        text1: "CEP inválido",
-        text2: "Digite um CEP válido.",
-      });
-      return;
-    }
-
-    if (!numero.trim()) {
-      Toast.show({
-        type: "error",
-        text1: "Número obrigatório",
-        text2: "Digite o número do imóvel.",
-      });
+    if (!validateName(nome) || !validateEmail(email) || !validateCEP(cep)) {
+      Toast.show({ type: "error", text1: "Dados inválidos", text2: "Preencha os campos corretamente." });
       return;
     }
 
     if (!uf) {
-      Toast.show({
-        type: "error",
-        text1: "Estado obrigatório",
-        text2: "Selecione um estado.",
-      });
+      Toast.show({ type: "error", text1: "Estado obrigatório", text2: "Selecione um estado." });
       return;
     }
 
     setLoading(true);
     try {
-      const db = await Banco();
-      const success = await atualizarUsuario(
-        db,
-        usuarioId!,
+      await updateClient(usuarioId!, {
         nome,
         email,
         cep,
         logradouro,
-        numero,
-        complemento,
+        complemento: numero ? `${numero} ${complemento}`.trim() : complemento,
         bairro,
-        cidade,
+        localidade: cidade,
         uf,
-      );
-
-      if (success) {
-        Toast.show({
-          type: "success",
-          text1: "Usuário atualizado!",
-          text2: "Dados salvos com sucesso.",
-        });
-        onSuccess();
-        onClose();
-      }
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Erro ao salvar",
-        text2: "Tente novamente.",
       });
+
+      Toast.show({ type: "success", text1: "Cliente atualizado!" });
+      onSuccess();
+      onClose();
+    } catch (error) {
+      Toast.show({ type: "error", text1: "Erro ao salvar", text2: "Tente novamente." });
     } finally {
       setLoading(false);
     }
